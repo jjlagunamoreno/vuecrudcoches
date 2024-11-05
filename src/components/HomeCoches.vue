@@ -2,7 +2,6 @@
   <div class="container mt-5">
     <h1 class="text-center">Home</h1>
 
-    <!-- Centro la imagen del gif mientras se cargan los datos -->
     <div
       v-if="status == false"
       class="d-flex justify-content-center align-items-center"
@@ -46,10 +45,10 @@
               >
                 Update
               </router-link>
-              <!-- Botón para eliminar el coche -->
+              <!-- Botón para eliminar el coche con SweetAlert -->
               <button
                 class="btn btn-danger btn-sm"
-                @click="eliminarCoche(coche.idCoche)"
+                @click="confirmarEliminarCoche(coche.idCoche)"
               >
                 Delete
               </button>
@@ -62,6 +61,7 @@
 </template>
 
 <script>
+import Swal from "sweetalert2";
 import ServicesCoches from "@/services/servicesCoches";
 
 const service = new ServicesCoches();
@@ -78,27 +78,46 @@ export default {
     };
   },
   methods: {
-    // Método para cargar los coches desde el servicio
     cargarCoches() {
       service.getCoches().then((result) => {
         this.status = true;
         this.coches = result;
       });
     },
-    // Método para eliminar un coche
+    confirmarEliminarCoche(idCoche) {
+      Swal.fire({
+        title: "¿Estás seguro?",
+        text: "No podrás revertir esta acción",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Sí, eliminar",
+        cancelButtonText: "Cancelar",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.eliminarCoche(idCoche);
+        }
+      });
+    },
     eliminarCoche(idCoche) {
-      if (confirm("¿Estás seguro de que deseas eliminar este coche?")) {
-        service
-          .deleteCoche(idCoche)
-          .then(() => {
-            // Filtramos la lista para quitar el coche eliminado
-            this.coches = this.coches.filter((coche) => coche.idCoche !== idCoche);
-          })
-          .catch((error) => {
-            console.error("Error al eliminar el coche:", error);
-          });
-      }
+      service
+        .deleteCoche(idCoche)
+        .then(() => {
+          this.coches = this.coches.filter((coche) => coche.idCoche !== idCoche);
+          Swal.fire("Eliminado", "El coche ha sido eliminado.", "success");
+        })
+        .catch((error) => {
+          console.error("Error al eliminar el coche:", error);
+          Swal.fire("Error", "No se pudo eliminar el coche.", "error");
+        });
     },
   },
 };
 </script>
+
+<style scoped>
+form {
+  margin-top: 20px;
+}
+</style>
